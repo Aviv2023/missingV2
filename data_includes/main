@@ -1,0 +1,271 @@
+// Remove command prefix
+PennController.ResetPrefix(null),
+
+// Turn off debugger
+DebugOff(),
+
+
+// Control trial sequence
+Sequence( 
+        "consent", 
+        "instructions",
+        "instructions2",
+        "demographics",
+        "practice-start",
+        "practice",
+        "practice-end",
+        shuffle(randomize("experimental-trial"), randomize("fillers")),
+        "debriefing",
+        "send",
+        "completion_screen"
+)
+var progressBarText = ""
+
+// Consent form
+newTrial("consent",
+    newHtml("consent_form", "consent.html")
+        .cssContainer({"align":"right", "dir":"rtl"})
+        .checkboxWarning("יש להסכים לפני שניתן להמשיך")
+        .center()
+        .print()
+        .log()
+    ,
+    newButton("continue", "המשך")
+        .center()
+        .print()
+        .cssContainer({"margin-bottom":"7em"})
+        .wait(getHtml("consent_form").test.complete()
+                  .failure(getHtml("consent_form").warn())
+        )
+)
+
+//Demographics form
+newTrial("instructions",
+    newHtml("instructions", "instructions1.html")
+        .cssContainer({"align":"right", "dir":"rtl"})
+        .center()
+        .log()
+        .print()
+    ,
+    newButton("continue", "המשך")
+        .center()
+        .print()
+        .cssContainer({"margin-bottom":"2em"})
+        .wait(getHtml("instructions").test.complete()
+            .failure(getHtml("instructions").warn())
+        )
+)
+newTrial("instructions2",
+    newHtml("instructions", "instructions2.html")
+        .cssContainer({"align":"right", "dir":"rtl"})
+        .center()
+        .log()
+        .print()
+    ,
+    newButton("continue", "המשך")
+        .center()
+        .print()
+        .cssContainer({"margin-bottom":"2em"})
+        .wait(getHtml("instructions").test.complete()
+            .failure(getHtml("instructions").warn())
+        )
+)
+
+//demographics
+newTrial("demographics",
+    newHtml("demographics_form", "demographics.html")
+        .cssContainer({"width":"720px"})
+        .center()
+        .print()
+        .log()
+        .log("age_of_acquisition")
+    ,
+    newButton("continue", "המשך")
+        .center()
+        .print()
+        .cssContainer({"margin-bottom":"2em"})
+        .wait(getHtml("demographics_form").test.complete()
+            .failure(getHtml("demographics_form").warn())
+        )
+)
+
+//debriefing
+newTrial("debriefing",
+    newHtml("debriefing_form", "debriefing.html")
+        .cssContainer({"width":"720px"})
+        .center()
+        .log()
+        .print()
+    ,
+    newButton("continue", "המשך")
+        .center()
+        .print()
+        .cssContainer({"margin-bottom":"2em"})
+        .wait(getHtml("debriefing_form").test.complete()
+            .failure(getHtml("debriefing_form").warn())
+        )
+)
+
+newTrial("practice-start"
+    ,
+    newText("practice-end", "בואו נתחיל עם כמה משפטי אימון")    
+        .center()
+        .print()
+        .cssContainer({"margin-bottom":"2em"})
+    ,
+    newButton("continue", "להמשך")
+        .center()
+        .print()
+        .wait()
+
+)
+
+newTrial("practice-end"
+    ,
+    newText("practice-end", "!זהו סוף האימון. המשפטים הבאים הם כבר הניסוי עצמו. בהצלחה")    
+        .center()
+        .print()
+        .cssContainer({"dir":"rtl", "margin-bottom":"2em"})
+
+    ,
+    newButton("continue", "להמשך")
+        .center()
+        .print()
+        .wait()
+
+)
+
+//practice
+Template("NS-practice.csv", row =>
+    newTrial("practice"
+    ,
+        newTimer("break", 1000)
+            .start()
+            .wait()
+        ,
+        newController("DashedSentence", {s : row.sentence})
+            .print()
+            .center()
+            .cssContainer({"font-size":"20px","margin-top":"2em", "margin-bottom":"2em", "direction":"rtl"})
+            .wait()
+            .remove()
+        ,
+        newScale("natural", "1", "2", "3", "4", "5", "6", "7")
+            .label(1,2,3,4,5,6,7)
+            .labelsPosition("top")
+            .before( newText("right", "לא קביל בכלל").css("font-size","16px") )
+            .after( newText("left", "קביל לגמרי").css("font-size","16px") )
+            .keys()
+            .center()
+            .print()
+            .wait()
+        ,
+        getScale("natural")
+            .log("last")
+        ,
+        newText("next_sentence", "לחצו רווח למשפט הבא")
+            .center()
+            .cssContainer({"dir":"rtl", "margin-top":"2em"})
+            .print()
+        ,
+        newKey("space", " ")
+            .print()
+            .wait()
+        
+)
+    .log("item", row.item)
+    .log("sentence", row.sentence)
+    .log("condition", row.condition)
+)
+
+// Experimental trial
+Template("MV2_items1.csv", row =>
+    newTrial("experimental-trial",
+        newController("DashedSentence", {s : row.sentence})   // row.sentence
+            .print()
+            .center()
+            .cssContainer({"font-size":"20px","margin-top":"2em", "margin-bottom":"2em", "direction":"rtl"})
+            .wait()
+            .remove()
+        ,   
+        newScale("natural", "1", "2", "3", "4", "5", "6", "7")
+            .label(1,2,3,4,5,6,7)
+            .labelsPosition("top")
+            .before( newText("right", "לא קביל בכלל").css("font-size","16px") )
+            .after( newText("left", "קביל לגמרי").css("font-size","16px") )
+            .keys()
+            .center()
+            .print()
+            .wait()
+        ,
+        getScale("natural")
+            .log("last")
+        ,
+        newText("next_sentence", "לחצו רווח למשפט הבא")
+            .center()
+            .cssContainer({"dir":"rtl", "margin-top":"2em"})
+            .print()
+        ,
+        newKey("space", " ")
+            .print()
+            .wait()
+)
+    .log("group", row.group)
+    .log("item", row.item)
+    .log("sentence", row.sentence)
+    .log("condition", row.condition)
+)
+
+//fillers
+Template("MV2_fillers1.csv", row =>
+    newTrial("fillers",
+        newController("DashedSentence", {s : row.sentence})
+            .print()
+            .center()
+            .cssContainer({"font-size":"20px","margin-top":"2em", "margin-bottom":"2em", "direction":"rtl"})
+            .wait()
+            .remove()
+        ,
+        newScale("natural", "1", "2", "3", "4", "5", "6", "7")
+            .label(1,2,3,4,5,6,7)
+            .labelsPosition("top")
+            .before( newText("right", "לא קביל בכלל ").css("font-size","16px") )
+            .after( newText("left", "קביל לגמרי").css("font-size","16px") )
+            .keys()
+            .center()
+            .print()
+            .wait()
+        ,
+        getScale("natural")
+            .log("last")
+        ,
+        newText("next_sentence", "לחצו רווח למשפט הבא")
+            .center()
+            .cssContainer({"dir":"rtl", "margin-top":"2em"})
+            .print()
+        ,
+        newKey("space", " ")
+            .print()
+            .wait()
+)
+    .log("sentence", row.sentence)
+    .log("grammaticality", row.grammaticality)
+    .log("type", row.type)
+)
+
+
+// Send results manually
+SendResults("send");
+
+
+// Completion screen
+newTrial("completion_screen",
+    newText("thanks", "!תודה רבה על השתתפותכן.ם")
+        .center()
+        .print()
+    ,
+    newButton("end experiement", "להתראות")
+        .center()
+        .print()
+        .wait()
+)
